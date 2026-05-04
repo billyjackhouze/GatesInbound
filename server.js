@@ -72,10 +72,10 @@ async function withFM(res, fn) {
 // ─────────────────────────────────────────────────────────────
 app.get('/api/inbound-shipments', async (req, res) => {
   const result = await withFM(res, async (fm) => {
-    const now      = new Date();
-    const past30   = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const future30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const dateRange = `${fmDate(past30)}...${fmDate(future30)}`;
+    const now       = new Date();
+    const yesterday = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+    const tomorrow  = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+    const dateRange = `${fmDate(yesterday)}...${fmDate(tomorrow)}`;
 
     const records = await fm.findRecords(
       LAYOUT,
@@ -92,7 +92,7 @@ app.get('/api/inbound-shipments', async (req, res) => {
     return {
       count:   records.length,
       asOf:    new Date().toISOString(),
-      window:  { from: fmDate(past30), to: fmDate(future30) },
+      window:  { from: fmDate(yesterday), to: fmDate(tomorrow) },
       records: records.map(r => ({
         recordId:     r.recordId,
         expArrival:   r.fieldData['ExpArrivalDate']                || '',
