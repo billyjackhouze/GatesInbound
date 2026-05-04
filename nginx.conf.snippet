@@ -1,0 +1,72 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  Nginx — GatesInbound
+#  External:  gatesinbound.hostwithfilemaker.com:8081
+#  Internal:  localhost:3005
+#
+#  This follows the same pattern as Delivery Tickets
+#    (gelwarehouse.hostwithfilemaker.com:8080 → localhost:3004)
+#
+#  ADD this block to your server's nginx config, typically by appending to:
+#    /etc/nginx/nginx.conf   OR   /etc/nginx/sites-available/gates-apps
+#
+#  Then test and reload:
+#    sudo nginx -t
+#    sudo systemctl reload nginx
+#
+#  ⚠️  Make sure port 8081 is open in your firewall / cloud security group.
+#      (Port 8080 for Delivery Tickets should already be open — 8081 is new.)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# ── GatesInbound — port 8081 → Node port 3005 ──────────────────────────────
+server {
+    listen 8081;
+    listen [::]:8081;
+    server_name gatesinbound.hostwithfilemaker.com;
+
+    # ── Proxy to GatesInbound Node app ────────────────────────────────────
+    location / {
+        proxy_pass         http://127.0.0.1:3005;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        'upgrade';
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+
+        # FM calls can take a moment
+        proxy_read_timeout    60s;
+        proxy_connect_timeout 10s;
+    }
+
+    # ── Logging ───────────────────────────────────────────────────────────
+    access_log /var/log/nginx/gatesinbound.access.log;
+    error_log  /var/log/nginx/gatesinbound.error.log;
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  EXISTING: Delivery Tickets — port 8080 → Node port 3004
+#  (Already configured — shown here for reference only. Do NOT duplicate.)
+# ═══════════════════════════════════════════════════════════════════════════
+# server {
+#     listen 8080;
+#     listen [::]:8080;
+#     server_name gelwarehouse.hostwithfilemaker.com;
+#
+#     location / {
+#         proxy_pass         http://127.0.0.1:3004;
+#         proxy_http_version 1.1;
+#         proxy_set_header   Host              $host;
+#         proxy_set_header   X-Real-IP         $remote_addr;
+#         proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+#         proxy_set_header   X-Forwarded-Proto $scheme;
+#         proxy_read_timeout    60s;
+#         proxy_connect_timeout 10s;
+#     }
+#
+#     access_log /var/log/nginx/gelwarehouse.access.log;
+#     error_log  /var/log/nginx/gelwarehouse.error.log;
+# }
