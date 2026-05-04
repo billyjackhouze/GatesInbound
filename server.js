@@ -34,7 +34,8 @@ const LAYOUT = 'GatesInboundShipmentsAPI';
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// In production, Vite builds to dist/. In dev, Vite's own server handles the UI.
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // ─────────────────────────────────────────────────────────────
 // Helper: format a JS Date as M/D/YYYY for FileMaker find syntax
@@ -117,10 +118,10 @@ app.get('/api/fm/status', async (_req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// SPA fallback
+// SPA fallback — serves the Vite-built index.html for any unknown route
 // ─────────────────────────────────────────────────────────────
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {

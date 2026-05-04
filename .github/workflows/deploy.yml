@@ -30,8 +30,11 @@ jobs:
             cd ${{ secrets.SERVER_APP_PATH }}
             git pull origin main
 
-            echo "── Installing dependencies ──"
-            npm ci --omit=dev
+            echo "── Installing dependencies (including dev deps for build) ──"
+            npm ci
+
+            echo "── Building React app ──"
+            npm run build
 
             echo "── Restarting PM2 process ──"
             # Restart if already running, otherwise start fresh from ecosystem config

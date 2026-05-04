@@ -62,8 +62,9 @@ nano .env            # fill in FM_HOST, FM_USERNAME, FM_PASSWORD, FM_SIDEKICK_DB
 # 3. Create logs directory
 mkdir -p logs
 
-# 4. Install dependencies
-npm ci --omit=dev
+# 4. Install all dependencies and build the React app
+npm ci
+npm run build
 
 # 5. Start the app with PM2
 pm2 start ecosystem.config.js --env production
@@ -130,14 +131,28 @@ TTL: 300
 
 ---
 
-## Day-to-day workflow after setup
+## Local development (React + Vite)
 
 ```bash
-# Make changes on your Mac, then:
+cd "/Users/billyjack/Documents/Claude/Projects/Gate Engineered Lubricants/GatesInbound"
+cp .env.example .env          # fill in FM credentials
+npm install
+
+# Start both the Express API (port 3005) and the Vite dev server (port 5173):
+npm run dev
+```
+
+Then open **http://localhost:5173** — Vite proxies `/api` calls to Express automatically.
+
+---
+
+## Day-to-day deploy workflow
+
+```bash
 cd "/Users/billyjack/Documents/Claude/Projects/Gate Engineered Lubricants/GatesInbound"
 git add .
 git commit -m "describe your change"
-git push                # GitHub Actions automatically deploys to the server
+git push                # GitHub Actions pulls, builds React, restarts PM2 automatically
 ```
 
 Watch the deploy live: GitHub repo → **Actions** tab.
@@ -147,10 +162,10 @@ Watch the deploy live: GitHub repo → **Actions** tab.
 ## Useful server commands
 
 ```bash
-pm2 status                    # see all running apps
-pm2 logs gates-inbound        # tail live logs
-pm2 logs gates-inbound --lines 100   # last 100 lines
-pm2 restart gates-inbound     # manual restart
+pm2 status                             # see all running apps
+pm2 logs gates-inbound                 # tail live logs
+pm2 logs gates-inbound --lines 100     # last 100 lines
+pm2 restart gates-inbound             # manual restart
 sudo nginx -t && sudo systemctl reload nginx   # reload nginx config
 ```
 
@@ -167,3 +182,45 @@ sudo nginx -t && sudo systemctl reload nginx   # reload nginx config
 
 > ⚠️ Open port **8081** in your firewall / cloud security group before going live.  
 > Port 8080 should already be open for Delivery Tickets.
+
+---
+
+## Part 6 — Migrating from the old HTML version to React on the live server
+
+If you previously deployed a plain-HTML version of GatesInbound and need to upgrade it to the React/Vite build, SSH into the server and run:
+
+```bash
+cd $SERVER_APP_PATH   # e.g. /var/www/GatesInbound
+
+# 1. Pull the latest React code
+git pull origin main
+
+# 2. Install ALL dependencies (Vite is a devDependency — needed for the build step)
+npm ci
+
+# 3. Build the React app — output goes to dist/
+npm run build
+
+# 4. Restart PM2 (or start fresh if the process doesn't exist yet)
+pm2 restart gates-inbound 2>/dev/null || pm2 start ecosystem.config.js --only gates-inbound
+
+# 5. Save the process list
+pm2 save
+
+# 6. Verify it's serving the new React build
+curl -s http://localhost:3005 | grep -o '<title>.*</title>'
+```
+
+**Nginx needs no changes** — it still proxies port 8081 → 3005. The React build is served by Express from `dist/`; the old `public/index.html` is gone and replaced by `dist/index.html`.
+
+**Verify end-to-end:**
+
+```bash
+# From the server — check the API
+curl http://localhost:3005/api/fm/status
+
+# From any browser / external machine
+curl http://gatesinbound.hostwithfilemaker.com:8081/api/fm/status
+```
+
+If `pm2 logs gates-inbound` shows "GEL Inbound Shipments → http://localhost:3005", the migration is complete.

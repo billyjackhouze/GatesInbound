@@ -1,21 +1,29 @@
 {
   "name": "gates-inbound-shipments",
   "version": "1.0.0",
-  "description": "GEL Inbound Shipments Board — raw-material shipments expected within ±30 days, not yet arrived",
+  "description": "GEL Inbound Shipments Board — React + Vite frontend, Express/FM API backend",
   "main": "server.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node server.js",
-    "dev":   "nodemon server.js"
+    "dev:api": "node server.js",
+    "dev:ui":  "vite",
+    "dev":     "concurrently -n API,UI -c blue,green \"npm run dev:api\" \"npm run dev:ui\"",
+    "build":   "vite build",
+    "preview": "vite preview",
+    "start":   "node server.js"
   },
   "dependencies": {
     "axios":   "^1.7.2",
     "dotenv":  "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "react":   "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "vite": "^5.4.0"
   }
 }
