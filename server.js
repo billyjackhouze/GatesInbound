@@ -75,7 +75,7 @@ app.get('/api/inbound-shipments', async (req, res) => {
     const now      = new Date();
     const past30   = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const future30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const dateRange = `>=${fmDate(past30)} and <=${fmDate(future30)}`;
+    const dateRange = `${fmDate(past30)}...${fmDate(future30)}`;
 
     const records = await fm.findRecords(
       LAYOUT,
