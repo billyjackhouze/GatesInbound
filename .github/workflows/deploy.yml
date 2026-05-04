@@ -1,0 +1,54 @@
+name: Deploy — GatesInbound
+
+# Triggers on every push to main branch
+on:
+  push:
+    branches: [main]
+
+  # Also allows manual trigger from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: SSH Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # ── 1. Deploy via SSH ────────────────────────────────────────────
+      - name: Pull & restart on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key:      ${{ secrets.SERVER_SSH_KEY }}
+          port:     ${{ secrets.SERVER_SSH_PORT || 22 }}
+          script: |
+            set -e   # abort on any error
+
+            echo "── Pulling latest code ──"
+            cd ${{ secrets.SERVER_APP_PATH }}
+            git pull origin main
+
+            echo "── Installing dependencies (including dev deps for build) ──"
+            npm ci
+
+            echo "── Building React app ──"
+            npm run build
+
+            echo "── Restarting PM2 process ──"
+            # Restart if already running, otherwise start fresh from ecosystem config
+            pm2 restart gates-inbound 2>/dev/null || pm2 start ecosystem.config.js --only gates-inbound
+
+            echo "── Saving PM2 process list ──"
+            pm2 save
+
+            echo "✅ Deploy complete"
+
+      # ── 2. Notify result (visible in Actions tab) ────────────────────
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "Deployed to: gatesinbound.hostwithfilemaker.com"
+          echo "Port: 3005"
+          echo "PM2 process: gates-inbound"
