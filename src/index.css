@@ -204,17 +204,11 @@ body {
   white-space: nowrap;
 }
 
-/* ── Board (scrollable content area) ───────────────────────────────────────── */
+/* ── Board — no scroll, auto-fit scales everything to fit ───────────────────── */
 
 .board {
-  flex:       1;
-  overflow-y: auto;
-  padding:    clamp(0.6rem, 1.2vh, 2rem) clamp(0.6rem, 1.2vw, 2rem);
+  padding: clamp(0.6rem, 1.2vh, 2rem) clamp(0.6rem, 1.2vw, 2rem);
 }
-
-.board::-webkit-scrollbar       { width: 6px; }
-.board::-webkit-scrollbar-track { background: var(--bg); }
-.board::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* ── Carrier section ────────────────────────────────────────────────────────── */
 

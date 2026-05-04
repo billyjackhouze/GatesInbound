@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 const REFRESH_MS = 60_000
 
@@ -225,6 +225,37 @@ function EmptyState({ error }) {
   )
 }
 
+// ── Auto-fit hook — scales #root so all records fit without scrolling ─────────
+// Mirrors Delivery Tickets useAutoFit exactly.
+
+function useAutoFit(triggerKey) {
+  useEffect(() => {
+    function fit() {
+      const root = document.getElementById('root')
+      if (!root) return
+      root.style.transform = 'none'
+      root.style.width = ''
+      requestAnimationFrame(() => {
+        const naturalH = root.scrollHeight
+        const viewH    = window.innerHeight
+        const viewW    = window.innerWidth
+        if (naturalH > viewH + 4) {
+          const scale = viewH / naturalH
+          root.style.transformOrigin = 'top left'
+          root.style.transform       = `scale(${scale})`
+          root.style.width           = `${viewW / scale}px`
+        }
+      })
+    }
+    const raf = requestAnimationFrame(fit)
+    window.addEventListener('resize', fit)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', fit)
+    }
+  }, [triggerKey])
+}
+
 // ── Main App ──────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -259,6 +290,9 @@ export default function App() {
   }, [load])
 
   const groups = groupByCarrier(records)
+
+  // Re-fit whenever record count changes or window resizes
+  useAutoFit(JSON.stringify(groups.map(g => g[1].length)))
 
   let boardContent
   if (loading && records.length === 0) {
