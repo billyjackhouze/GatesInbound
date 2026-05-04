@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
-const REFRESH_MS = 60_000   // auto-sync every 60 seconds
+const REFRESH_MS = 60_000
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -19,7 +19,6 @@ function formatDate(str) {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-/** Returns 'overdue' | 'today' | 'soon' (≤3 days) | 'upcoming' */
 function arrivalStatus(str) {
   const d = parseFMDate(str)
   if (!d) return 'upcoming'
@@ -32,118 +31,198 @@ function arrivalStatus(str) {
   return 'upcoming'
 }
 
-// ── Group records by carrier ──────────────────────────────────────────────────
+function timeAgo(ts) {
+  if (!ts) return ''
+  const secs = Math.round((Date.now() - ts) / 1000)
+  if (secs < 10)  return 'just now'
+  if (secs < 60)  return `${secs}s ago`
+  if (secs < 120) return '1m ago'
+  return `${Math.round(secs / 60)}m ago`
+}
+
+// ── Group by carrier ──────────────────────────────────────────────────────────
 
 function groupByCarrier(records) {
   const map = new Map()
   for (const r of records) {
-    const key = r.carrier || 'Unknown Carrier'
+    const key = r.carrier || 'UNKNOWN CARRIER'
     if (!map.has(key)) map.set(key, [])
     map.get(key).push(r)
   }
-  // Sort carriers alphabetically; records within each group are already sorted by ExpArrivalDate
   return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
 }
 
-// ── Live clock — CT ───────────────────────────────────────────────────────────
+// ── Live clock ────────────────────────────────────────────────────────────────
 
-function LiveClock() {
-  const [now, setNow] = useState(new Date())
+function Clock() {
+  const [time, setTime] = useState('')
+  const [date, setDate] = useState('')
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(t)
+    function tick() {
+      const now = new Date()
+      setTime(now.toLocaleTimeString('en-US', {
+        timeZone: 'America/Chicago', hour12: true,
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      }) + ' CT')
+      setDate(now.toLocaleDateString('en-US', {
+        timeZone: 'America/Chicago', weekday: 'short',
+        month: 'short', day: 'numeric', year: 'numeric',
+      }))
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
   }, [])
-  const time = now.toLocaleTimeString('en-US', {
-    hour: 'numeric', minute: '2-digit', second: '2-digit',
-    timeZone: 'America/Chicago',
-  })
-  const date = now.toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-    timeZone: 'America/Chicago',
-  })
   return (
-    <div className="clock">
-      <div className="clock-time">{time}</div>
-      <div className="clock-date">{date} CT</div>
+    <div className="header-right">
+      <div className="clock">{time}</div>
+      <div className="dateline">{date}</div>
     </div>
   )
 }
 
-// ── Carrier group header + rows ───────────────────────────────────────────────
+// ── Fullscreen button — matches Delivery Tickets style ────────────────────────
 
-function ShipmentRow({ record }) {
-  const status = arrivalStatus(record.expArrival)
-  return (
-    <div className="shipment-row">
-      <div className="row-top">
-        <span className={`ticket-num status-${status}`}>
-          {record.ticketNumber || record.gelPO || '—'}
-        </span>
-        <span className={`row-date status-${status}`}>
-          {formatDate(record.expArrival)}
-        </span>
-      </div>
-      <div className="row-vendor">{record.vendor || '—'}</div>
-      <div className="row-sub">
-        {record.billOfLading ? <>BOL {record.billOfLading}<span className="dot-sep"> · </span></> : null}
-        {record.gelPO ? <>PO {record.gelPO}<span className="dot-sep"> · </span></> : null}
-        <span>{record.logisticsco || ''}</span>
-      </div>
-    </div>
-  )
-}
-
-function CarrierGroup({ carrier, records }) {
-  return (
-    <div className="carrier-group">
-      <div className="carrier-header">
-        <span className="carrier-emoji">📦</span>
-        <span className="carrier-name">{carrier}</span>
-        <span className="carrier-count">
-          {records.length} shipment{records.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-      {records.map(r => <ShipmentRow key={r.recordId} record={r} />)}
-    </div>
-  )
-}
-
-// ── Fullscreen helpers ────────────────────────────────────────────────────────
-
-function useFullscreen() {
-  const [full, setFull] = useState(false)
+function FullscreenButton() {
+  const [isFull, setIsFull] = useState(false)
   useEffect(() => {
-    const handler = () => setFull(!!document.fullscreenElement)
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
+    const onChange = () => setIsFull(Boolean(document.fullscreenElement))
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
-  const toggle = useCallback(() => {
+  const toggle = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {})
     } else {
       document.exitFullscreen().catch(() => {})
     }
-  }, [])
-  return { full, toggle }
+  }
+  return (
+    <button className="fs-btn" onClick={toggle} title={isFull ? 'Exit fullscreen' : 'Enter fullscreen'}>
+      {isFull ? '✕' : '⛶'}
+      <span className="fs-label">{isFull ? 'EXIT FULL' : 'FULLSCREEN'}</span>
+    </button>
+  )
 }
 
-// ── "Updated X min ago" counter ───────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────────
 
-function useAgoText(syncedAt) {
-  const [agoText, setAgoText] = useState('')
+function Header() {
+  return (
+    <header className="header">
+      <div className="logo-wrap">
+        <img src="/gates_logo.avif" alt="Gates Engineered Lubricants" className="logo-img" />
+      </div>
+      <div className="title-block">
+        <div className="app-title">Inbound Shipments</div>
+        <div className="app-sub">Gates Engineered Lubricants — Live Board</div>
+      </div>
+      <Clock />
+      <FullscreenButton />
+    </header>
+  )
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+
+function StatusBar({ connected, total, syncedAt }) {
+  const [ago, setAgo] = useState('')
   useEffect(() => {
-    if (!syncedAt) { setAgoText(''); return }
-    const update = () => {
-      const secs = Math.round((Date.now() - syncedAt) / 1000)
-      if (secs < 60)       setAgoText(`Updated just now`)
-      else if (secs < 120) setAgoText(`Updated 1 min ago`)
-      else                 setAgoText(`Updated ${Math.floor(secs / 60)} min ago`)
-    }
-    update()
-    const t = setInterval(update, 15_000)
-    return () => clearInterval(t)
+    const id = setInterval(() => setAgo(timeAgo(syncedAt)), 10_000)
+    setAgo(timeAgo(syncedAt))
+    return () => clearInterval(id)
   }, [syncedAt])
-  return agoText
+  return (
+    <div className="statusbar">
+      <span className={`status-dot ${connected ? 'live' : 'dead'}`} />
+      <span className="status-text">
+        {connected ? 'Live — updates automatically' : 'Disconnected'}
+      </span>
+      {total > 0 && (
+        <span className="shipment-count">
+          {total} {total === 1 ? 'SHIPMENT' : 'SHIPMENTS'}
+        </span>
+      )}
+      {ago && <span className="last-update">Updated {ago}</span>}
+    </div>
+  )
+}
+
+// ── Shipment row ──────────────────────────────────────────────────────────────
+
+function ShipmentRow({ record, index }) {
+  const status = arrivalStatus(record.expArrival)
+  return (
+    <div className={`ship-row ${index % 2 === 0 ? 'even' : 'odd'}`}>
+      <div className="ship-top">
+        <span className={`ship-ticket ${status}`}>
+          {record.ticketNumber || record.gelPO || '—'}
+        </span>
+        <span className={`ship-date ${status}`}>
+          {formatDate(record.expArrival)}
+        </span>
+      </div>
+      <div className="ship-vendor">{record.vendor || '—'}</div>
+      <div className="ship-footer">
+        {record.billOfLading && (
+          <span className="ship-meta">
+            <span className="ship-meta-label">BOL</span>
+            {record.billOfLading}
+          </span>
+        )}
+        {record.billOfLading && record.gelPO && (
+          <span className="meta-divider">·</span>
+        )}
+        {record.gelPO && (
+          <span className="ship-meta">
+            <span className="ship-meta-label">PO</span>
+            {record.gelPO}
+          </span>
+        )}
+        {record.logisticsco && (
+          <>
+            <span className="meta-divider">·</span>
+            <span className="ship-meta">{record.logisticsco}</span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Carrier group ─────────────────────────────────────────────────────────────
+
+function CarrierGroup({ carrier, records }) {
+  return (
+    <div className="carrier-section">
+      <div className="carrier-header">
+        <span className="carrier-icon">📦</span>
+        <span className="carrier-name">{carrier}</span>
+        <span className="carrier-badge">
+          {records.length} {records.length === 1 ? 'Shipment' : 'Shipments'}
+        </span>
+      </div>
+      {records.map((r, i) => (
+        <ShipmentRow key={r.recordId} record={r} index={i} />
+      ))}
+    </div>
+  )
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({ error }) {
+  return (
+    <div className="empty-state">
+      <div className="empty-icon">{error ? '⚠️' : '✅'}</div>
+      <div className="empty-label">
+        {error ? 'Failed to load shipments' : 'No Pending Inbound Shipments'}
+      </div>
+      <div className="empty-sub">
+        {error ? error : 'Board updates automatically · ±30-day window'}
+      </div>
+    </div>
+  )
 }
 
 // ── Main App ──────────────────────────────────────────────────────────────────
@@ -152,12 +231,9 @@ export default function App() {
   const [records,  setRecords]  = useState([])
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState(null)
-  const [syncedAt, setSyncedAt] = useState(null)   // timestamp ms
+  const [syncedAt, setSyncedAt] = useState(null)
   const [live,     setLive]     = useState(false)
-  const { full, toggle: toggleFull } = useFullscreen()
-  const agoText = useAgoText(syncedAt)
 
-  // ── Load shipments ─────────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true)
     try {
@@ -176,94 +252,38 @@ export default function App() {
     }
   }, [])
 
-  // ── Boot + auto-refresh ────────────────────────────────────
   useEffect(() => {
     load()
     const t = setInterval(load, REFRESH_MS)
     return () => clearInterval(t)
   }, [load])
 
-  // ── Group records ──────────────────────────────────────────
   const groups = groupByCarrier(records)
 
-  // ── Board content ──────────────────────────────────────────
   let boardContent
   if (loading && records.length === 0) {
     boardContent = (
       <div className="empty-state">
-        <div className="empty-icon">⏳</div>
-        <div>Loading shipments…</div>
+        <div className="empty-icon" style={{ opacity: 0.3 }}>⏳</div>
+        <div className="empty-label">Loading Shipments…</div>
+        <div className="empty-sub">Connecting to GEL Sidekick</div>
       </div>
     )
   } else if (error && records.length === 0) {
-    boardContent = (
-      <div className="empty-state">
-        <div className="empty-icon">⚠️</div>
-        <div>Failed to load: {error}</div>
-      </div>
-    )
+    boardContent = <EmptyState error={error} />
   } else if (records.length === 0) {
-    boardContent = (
-      <div className="empty-state">
-        <div className="empty-icon">✅</div>
-        <div>No pending inbound shipments in the ±30-day window</div>
-      </div>
-    )
+    boardContent = <EmptyState />
   } else {
     boardContent = groups.map(([carrier, recs]) => (
       <CarrierGroup key={carrier} carrier={carrier} records={recs} />
     ))
   }
 
-  // ── Render ─────────────────────────────────────────────────
   return (
     <>
-      {/* ── Top bar ── */}
-      <div className="topbar">
-        <div className="topbar-left">
-          <img src="/gates_logo.avif" alt="Gates Engineered Lubricants" className="logo" />
-          <div className="title-block">
-            <div className="title">INBOUND SHIPMENTS</div>
-            <div className="subtitle">GATES ENGINEERED LUBRICANTS · LIVE BOARD</div>
-          </div>
-        </div>
-
-        <div className="topbar-right">
-          <LiveClock />
-          <button className="exit-btn" onClick={toggleFull}>
-            {full ? 'EXIT FULL' : 'FULL SCREEN'}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Status bar ── */}
-      <div className="status-bar">
-        <div className="status-left">
-          <div className={`live-dot ${live ? 'live' : 'dead'}`} />
-          <span className="live-text">
-            {live ? 'Live — updates automatically' : 'Disconnected'}
-          </span>
-        </div>
-        <div className="status-right">
-          <span className="count-badge">
-            {records.length} SHIPMENT{records.length !== 1 ? 'S' : ''}
-          </span>
-          {agoText && <span className="updated-text">{agoText}</span>}
-          <button
-            className="exit-btn"
-            style={{ padding: '4px 12px', fontSize: 12, background: '#0e7490' }}
-            onClick={load}
-            disabled={loading}
-          >
-            {loading ? '⟳' : '↻ Sync'}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Scrollable board ── */}
-      <div className="content">
-        {boardContent}
-      </div>
+      <Header />
+      <StatusBar connected={live} total={records.length} syncedAt={syncedAt} />
+      <main className="board">{boardContent}</main>
     </>
   )
 }

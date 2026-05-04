@@ -1,279 +1,385 @@
-/* ── Reset ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ═══════════════════════════════════════════════════════════════════════════
+   GEL Inbound Shipments Board — index.css
+   Mirrors Delivery Tickets structure exactly; teal accents instead of orange
+   so both boards read as a matched pair when placed side by side.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS Variables ─────────────────────────────────────────────────────────── */
+
+:root {
+  --bg:               #07121e;
+  --header-bg:        #04090f;
+  --status-bg:        #030810;
+  --carrier-bg:       #0e7490;   /* teal — differentiates from Delivery Tickets */
+  --carrier-bg2:      #065e73;   /* gradient end                                */
+  --card-even:        #0f2035;
+  --card-odd:         #0b1929;
+  --card-hover:       #162f4e;
+  --border:           #1a3352;
+  --teal:             #22d3ee;   /* accent / ticket numbers                     */
+  --teal-lt:          #67e8f9;
+  --text:             #f0f6ff;
+  --text-muted:       #6fa5cc;
+  --text-dim:         #3d6a8a;
+  --live-green:       #22c55e;
+  --dead-red:         #ef4444;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin:     0;
+  padding:    0;
+}
+
+html, body {
+  background: var(--bg);
+  height:     100%;
+  overflow:   hidden;
+}
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0a0f1a;
-  color: #f1f5f9;
-  height: 100vh;
-  overflow: hidden;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto,
+               'Helvetica Neue', Arial, sans-serif;
+  color:       var(--text);
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
-  height: 100vh;
-  display: flex;
+  min-height:     100vh;
+  display:        flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-/* ════════════════════════════════════════════════════
-   TOP BAR
-════════════════════════════════════════════════════ */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #0d1b2a;
-  border-bottom: 3px solid #0e7490;   /* teal accent — orange on Delivery Tickets */
-  padding: 10px 24px;
-  flex-shrink: 0;
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.header {
+  background:    var(--header-bg);
+  border-bottom: clamp(2px, 0.3vh, 5px) solid var(--carrier-bg);
+  padding:       clamp(0.6rem, 1.2vh, 1.8rem) clamp(1rem, 2.2vw, 3.5rem);
+  display:       flex;
+  align-items:   center;
+  gap:           clamp(0.8rem, 1.8vw, 3rem);
+  flex-shrink:   0;
+  box-shadow:    0 2px 20px rgba(0, 0, 0, 0.65);
 }
 
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+/* Gates logo — white background matches Delivery Tickets */
+.logo-wrap {
+  background:    #ffffff;
+  border-radius: clamp(0.25rem, 0.45vw, 0.7rem);
+  padding:       clamp(0.3rem, 0.6vh, 0.9rem) clamp(0.7rem, 1.4vw, 2.2rem);
+  flex-shrink:   0;
+  display:       flex;
+  align-items:   center;
 }
 
-.logo {
-  height: 44px;
-  width: auto;
+.logo-img {
+  height:  clamp(1.8rem, 3.4vw, 5.4rem);
+  width:   auto;
   display: block;
 }
 
-.title-block { line-height: 1.2; }
-
-.title {
-  font-size: 28px;
-  font-weight: 900;
-  color: #f1f5f9;
-  letter-spacing: .04em;
+.title-block {
+  flex:      1;
+  min-width: 0;
 }
 
-.subtitle {
-  font-size: 11px;
-  font-weight: 500;
-  color: #64748b;
-  letter-spacing: .08em;
-  margin-top: 2px;
+.app-title {
+  font-size:      clamp(1.5rem, 3vw, 5rem);
+  font-weight:    800;
+  color:          var(--text);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height:    1.05;
+  white-space:    nowrap;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
 }
 
-/* ── Live clock ── */
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+.app-sub {
+  font-size:      clamp(0.65rem, 1.05vw, 1.7rem);
+  color:          var(--text-dim);
+  margin-top:     clamp(0.1rem, 0.25vh, 0.5rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.clock { text-align: right; }
+.header-right {
+  text-align:  right;
+  flex-shrink: 0;
+}
 
-.clock-time {
-  font-size: 26px;
-  font-weight: 700;
-  color: #f1f5f9;
+.clock {
+  font-size:            clamp(1.5rem, 3vw, 5rem);
+  font-weight:          700;
+  color:                var(--text);
   font-variant-numeric: tabular-nums;
-  letter-spacing: .02em;
+  letter-spacing:       0.03em;
+  line-height:          1;
+  white-space:          nowrap;
 }
 
-.clock-date {
-  font-size: 11px;
-  color: #64748b;
-  letter-spacing: .06em;
-  margin-top: 2px;
+.dateline {
+  font-size:      clamp(0.65rem, 1.05vw, 1.7rem);
+  color:          var(--text-muted);
+  margin-top:     clamp(0.1rem, 0.25vh, 0.5rem);
+  letter-spacing: 0.06em;
+  white-space:    nowrap;
 }
 
-/* ── Exit/Fullscreen button ── */
-.exit-btn {
-  background: #c81e1e;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: .05em;
-  transition: opacity .15s;
+/* ── Fullscreen button — teal variant of Delivery Tickets fs-btn ───────────── */
+
+.fs-btn {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            clamp(0.1rem, 0.2vh, 0.3rem);
+  background:     rgba(14, 116, 144, 0.15);
+  border:         1px solid rgba(14, 116, 144, 0.4);
+  border-radius:  clamp(0.25rem, 0.45vw, 0.7rem);
+  padding:        clamp(0.3rem, 0.6vh, 0.9rem) clamp(0.5rem, 1vw, 1.5rem);
+  color:          var(--teal);
+  cursor:         pointer;
+  flex-shrink:    0;
+  transition:     background 0.15s, border-color 0.15s;
+  font-size:      clamp(1.2rem, 2.2vw, 3.5rem);
+  line-height:    1;
+}
+
+.fs-btn:hover {
+  background:   rgba(14, 116, 144, 0.3);
+  border-color: var(--teal);
+}
+
+.fs-label {
+  font-size:      clamp(0.5rem, 0.7vw, 1.1rem);
+  font-weight:    700;
+  letter-spacing: 0.08em;
+  white-space:    nowrap;
+}
+
+/* ── Status bar ─────────────────────────────────────────────────────────────── */
+
+.statusbar {
+  background:    var(--status-bg);
+  border-bottom: 1px solid var(--border);
+  padding:       clamp(0.3rem, 0.55vh, 0.9rem) clamp(1rem, 2.2vw, 3.5rem);
+  display:       flex;
+  align-items:   center;
+  gap:           clamp(0.5rem, 1vw, 1.8rem);
+  font-size:     clamp(0.7rem, 1vw, 1.7rem);
+  flex-shrink:   0;
+}
+
+.status-dot {
+  width:         clamp(0.55rem, 0.9vw, 1.4rem);
+  height:        clamp(0.55rem, 0.9vw, 1.4rem);
+  border-radius: 50%;
+  flex-shrink:   0;
+}
+.status-dot.live {
+  background: var(--live-green);
+  animation:  pulse 2.2s ease-in-out infinite;
+}
+.status-dot.dead { background: var(--dead-red); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+.status-text      { color: var(--text-muted); flex: 1; }
+
+.shipment-count {
+  font-weight:    700;
+  color:          var(--teal);
+  letter-spacing: 0.05em;
+  white-space:    nowrap;
+}
+
+.last-update {
+  color:       var(--text-dim);
   white-space: nowrap;
 }
-.exit-btn:hover { opacity: .85; }
 
-/* ════════════════════════════════════════════════════
-   STATUS BAR
-════════════════════════════════════════════════════ */
-.status-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #0d1b2a;
-  border-bottom: 1px solid #1e293b;
-  padding: 6px 24px;
-  flex-shrink: 0;
-}
+/* ── Board (scrollable content area) ───────────────────────────────────────── */
 
-.status-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.live-dot {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.live-dot.live { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
-.live-dot.dead { background: #ef4444; }
-
-.live-text {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.status-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.count-badge {
-  background: #0e7490;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 2px 12px;
-  border-radius: 12px;
-  letter-spacing: .04em;
-}
-
-.updated-text {
-  font-size: 12px;
-  color: #64748b;
-}
-
-/* ════════════════════════════════════════════════════
-   CONTENT AREA
-════════════════════════════════════════════════════ */
-.content {
-  flex: 1;
+.board {
+  flex:       1;
   overflow-y: auto;
-  padding: 0;
+  padding:    clamp(0.6rem, 1.2vh, 2rem) clamp(0.6rem, 1.2vw, 2rem);
 }
 
-/* Scrollbar styling */
-.content::-webkit-scrollbar { width: 6px; }
-.content::-webkit-scrollbar-track { background: #0a0f1a; }
-.content::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+.board::-webkit-scrollbar       { width: 6px; }
+.board::-webkit-scrollbar-track { background: var(--bg); }
+.board::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* ════════════════════════════════════════════════════
-   CARRIER GROUPS
-════════════════════════════════════════════════════ */
-.carrier-group {
-  margin-bottom: 2px;
+/* ── Carrier section ────────────────────────────────────────────────────────── */
+
+.carrier-section {
+  margin-bottom: clamp(0.5rem, 1vh, 1.6rem);
+  border-radius: clamp(0.3rem, 0.5vw, 0.8rem);
+  overflow:      hidden;
+  border:        1px solid var(--border);
+  box-shadow:    0 2px 10px rgba(0, 0, 0, 0.45);
 }
 
 .carrier-header {
-  display: flex;
+  background:  linear-gradient(90deg, var(--carrier-bg), var(--carrier-bg2));
+  padding:     clamp(0.6rem, 1vh, 1.5rem) clamp(1rem, 2.2vw, 3.5rem);
+  display:     flex;
   align-items: center;
-  gap: 10px;
-  background: #0e7490;      /* teal — orange on Delivery Tickets */
-  padding: 10px 24px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  gap:         clamp(0.6rem, 1.2vw, 2rem);
+  user-select: none;
 }
 
-.carrier-emoji {
-  font-size: 20px;
+.carrier-icon {
+  font-size:   clamp(1.2rem, 2.2vw, 3.5rem);
   flex-shrink: 0;
 }
 
 .carrier-name {
-  font-size: 20px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: .04em;
-  flex: 1;
+  font-size:      clamp(1.4rem, 2.5vw, 4.2rem);
+  font-weight:    800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex:           1;
+  white-space:    nowrap;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
 }
 
-.carrier-count {
-  font-size: 12px;
-  font-weight: 700;
-  background: rgba(0,0,0,.3);
-  color: #fff;
-  padding: 3px 12px;
-  border-radius: 12px;
-  letter-spacing: .05em;
-  white-space: nowrap;
+.carrier-badge {
+  font-size:      clamp(0.75rem, 1.1vw, 1.8rem);
+  font-weight:    700;
+  background:     rgba(0, 0, 0, 0.35);
+  padding:        clamp(0.2rem, 0.35vh, 0.5rem) clamp(0.5rem, 0.9vw, 1.4rem);
+  border-radius:  clamp(0.2rem, 0.35vw, 0.5rem);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space:    nowrap;
+  flex-shrink:    0;
 }
 
-/* ════════════════════════════════════════════════════
-   SHIPMENT ROWS
-════════════════════════════════════════════════════ */
-.shipment-row {
-  padding: 14px 24px;
-  border-bottom: 1px solid #1e293b;
-  background: #0d1b2a;
-  transition: background .1s;
-}
-.shipment-row:hover { background: #111c2e; }
+/* ── Shipment row — 3-line layout ───────────────────────────────────────────
+   Line 1:  TICKET #  (teal, small) ·············  Exp Date (muted, small)
+   Line 2:  VENDOR NAME              (white, LARGE, bold)
+   Line 3:  BOL xxxxxx · PO xxxxxx · Logistics Co  (muted, small)
+   ─────────────────────────────────────────────────────────────────────────── */
 
-.row-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.ticket-num {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  color: #22d3ee;           /* cyan — orange on Delivery Tickets */
-}
-
-/* Overdue / today / soon overrides */
-.ticket-num.status-overdue { color: #f87171; }
-.ticket-num.status-today   { color: #4ade80; }
-.ticket-num.status-soon    { color: #fb923c; }
-
-.row-date {
-  font-size: 14px;
-  font-weight: 600;
-  color: #94a3b8;
-  white-space: nowrap;
-}
-.row-date.status-overdue { color: #f87171; }
-.row-date.status-today   { color: #4ade80; }
-.row-date.status-soon    { color: #fb923c; }
-
-.row-vendor {
-  font-size: 22px;
-  font-weight: 700;
-  color: #f1f5f9;
-  margin-bottom: 4px;
-  line-height: 1.2;
-}
-
-.row-sub {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.dot-sep { color: #334155; }
-
-/* ════════════════════════════════════════════════════
-   EMPTY / LOADING STATE
-════════════════════════════════════════════════════ */
-.empty-state {
-  display: flex;
+.ship-row {
+  border-top:     1px solid var(--border);
+  padding:        clamp(0.7rem, 1.2vh, 1.8rem) clamp(1rem, 2.2vw, 3.5rem);
+  display:        flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 14px;
-  color: #475569;
-  font-size: 16px;
-  padding-top: 80px;
+  gap:            clamp(0.2rem, 0.4vh, 0.65rem);
+  transition:     background 0.12s;
+  cursor:         default;
 }
-.empty-icon { font-size: 48px; }
+
+.ship-row.even  { background: var(--card-even); }
+.ship-row.odd   { background: var(--card-odd);  }
+.ship-row:hover { background: var(--card-hover); }
+
+.ship-top {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  gap:             clamp(0.5rem, 1vw, 1.5rem);
+}
+
+.ship-ticket {
+  font-size:            clamp(0.9rem, 1.4vw, 2.3rem);
+  font-weight:          700;
+  color:                var(--teal);
+  font-variant-numeric: tabular-nums;
+  white-space:          nowrap;
+  flex-shrink:          0;
+}
+.ship-ticket.overdue { color: #f87171; }
+.ship-ticket.today   { color: #4ade80; }
+.ship-ticket.soon    { color: #fb923c; }
+
+.ship-date {
+  font-size:            clamp(0.9rem, 1.4vw, 2.3rem);
+  font-weight:          500;
+  color:                var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space:          nowrap;
+  flex-shrink:          0;
+}
+.ship-date.overdue { color: #f87171; }
+.ship-date.today   { color: #4ade80; }
+.ship-date.soon    { color: #fb923c; }
+
+.ship-vendor {
+  font-size:      clamp(1.5rem, 2.6vw, 4.4rem);
+  font-weight:    700;
+  color:          var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height:    1.1;
+  word-break:     break-word;
+}
+
+.ship-footer {
+  display:     flex;
+  align-items: center;
+  gap:         clamp(0.4rem, 0.9vw, 1.5rem);
+  flex-wrap:   wrap;
+}
+
+.ship-meta {
+  display:              flex;
+  align-items:          baseline;
+  gap:                  clamp(0.2rem, 0.4vw, 0.7rem);
+  font-size:            clamp(0.85rem, 1.3vw, 2.1rem);
+  color:                var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space:          nowrap;
+}
+
+.ship-meta-label {
+  font-size:      0.82em;
+  font-weight:    700;
+  color:          var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.meta-divider {
+  font-size:   clamp(0.85rem, 1.3vw, 2.1rem);
+  color:       var(--text-dim);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ── Empty / error state ────────────────────────────────────────────────────── */
+
+.empty-state {
+  text-align: center;
+  padding:    clamp(4rem, 10vh, 10rem) clamp(1rem, 2vw, 3rem);
+}
+
+.empty-icon {
+  font-size:     clamp(4rem, 10vw, 14rem);
+  margin-bottom: clamp(1rem, 2vh, 3rem);
+  opacity:       0.2;
+}
+
+.empty-label {
+  font-size:      clamp(1.5rem, 2.8vw, 4.5rem);
+  font-weight:    700;
+  color:          var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.empty-sub {
+  font-size:      clamp(0.9rem, 1.4vw, 2.2rem);
+  color:          var(--text-dim);
+  margin-top:     clamp(0.4rem, 0.8vh, 1.2rem);
+  letter-spacing: 0.06em;
+}

@@ -56,7 +56,13 @@ async function withFM(res, fn) {
     return result;
   } catch (err) {
     await fm.logout().catch(() => {});
-    res.status(500).json({ error: err.message });
+    // Log full FM error detail so it appears in PM2 logs
+    const fmDetail = err.response?.data;
+    console.error('[FM ERROR]', err.message, fmDetail ? JSON.stringify(fmDetail) : '');
+    res.status(500).json({
+      error:    err.message,
+      fmDetail: fmDetail ?? null,
+    });
     return null;
   }
 }
