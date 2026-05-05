@@ -74,7 +74,7 @@ app.get('/api/inbound-shipments', async (req, res) => {
   const result = await withFM(res, async (fm) => {
     const now      = new Date();
     const pastDays = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);  // all overdue up to 30 days back
-    const next72h  = new Date(now.getTime() + 3  * 24 * 60 * 60 * 1000);  // next 72 hours
+    const next72h  = new Date(now.getTime() + 2  * 24 * 60 * 60 * 1000);  // today + tomorrow + day after
     const dateRange = `${fmDate(pastDays)}...${fmDate(next72h)}`;
 
     const records = await fm.findRecords(

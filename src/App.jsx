@@ -51,13 +51,15 @@ function dayKey(expArrival) {
   if (diff < 0)  return '__OVERDUE'   // all past dates → one group
   if (diff === 0) return '__TODAY'
   if (diff === 1) return '__TOMORROW'
-  return expArrival                   // future: use raw date as key, sorted below
+  if (diff === 2) return '__DAYAFTER'
+  return expArrival
 }
 
 function dayLabel(key) {
   if (key === '__OVERDUE')  return 'OVERDUE'
   if (key === '__TODAY')    return 'TODAY'
   if (key === '__TOMORROW') return 'TOMORROW'
+  if (key === '__DAYAFTER') return 'DAY AFTER TOMORROW'
   const d = parseFMDate(key)
   if (!d) return key
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
@@ -67,6 +69,7 @@ function dayIcon(key) {
   if (key === '__OVERDUE')  return '🔴'
   if (key === '__TODAY')    return '🟢'
   if (key === '__TOMORROW') return '🟡'
+  if (key === '__DAYAFTER') return '📅'
   return '📅'
 }
 
@@ -79,7 +82,7 @@ function groupByDay(records) {
     map.get(key).push(r)
   }
   // Sort groups: overdue first, today, tomorrow, then future dates in order
-  const order = ['__OVERDUE', '__TODAY', '__TOMORROW']
+  const order = ['__OVERDUE', '__TODAY', '__TOMORROW', '__DAYAFTER']
   return Array.from(map.entries()).sort(([a], [b]) => {
     const ai = order.indexOf(a)
     const bi = order.indexOf(b)
@@ -241,7 +244,7 @@ function ShipmentRow({ record, index }) {
 function DayGroup({ dayKey: key, records }) {
   return (
     <div className="carrier-section">
-      <div className={`carrier-header day-${key.replace('__','').toLowerCase()}`}>
+      <div className={`carrier-header day-${key.startsWith('__') ? key.replace('__','').toLowerCase() : 'future'}`}>
         <span className="carrier-icon">{dayIcon(key)}</span>
         <span className="carrier-name">{dayLabel(key)}</span>
         <span className="carrier-badge">
