@@ -87,8 +87,8 @@ body {
 }
 
 .app-title {
-  font-size:      clamp(1.5rem, 3vw, 5rem);
-  font-weight:    800;
+  font-size:      clamp(2rem, 4.5vw, 7rem);
+  font-weight:    900;
   color:          var(--text);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -99,7 +99,7 @@ body {
 }
 
 .app-sub {
-  font-size:      clamp(0.65rem, 1.05vw, 1.7rem);
+  font-size:      clamp(0.85rem, 1.4vw, 2.2rem);
   color:          var(--text-dim);
   margin-top:     clamp(0.1rem, 0.25vh, 0.5rem);
   letter-spacing: 0.1em;
