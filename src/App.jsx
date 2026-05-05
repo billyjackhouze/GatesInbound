@@ -45,6 +45,7 @@ function timeAgo(ts) {
 function dayKey(expArrival) {
   const d = parseFMDate(expArrival)
   if (!d) return 'UNKNOWN DATE'
+  d.setHours(0, 0, 0, 0)                          // normalize to midnight
   const today = new Date(); today.setHours(0,0,0,0)
   const diff  = Math.round((d - today) / 86_400_000)
   if (diff < 0)  return '__OVERDUE'   // all past dates → one group
