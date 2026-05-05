@@ -236,13 +236,13 @@ body {
 }
 
 .carrier-icon {
-  font-size:   clamp(1.2rem, 2.2vw, 3.5rem);
+  font-size:   clamp(1.6rem, 2.8vw, 4.5rem);
   flex-shrink: 0;
 }
 
 .carrier-name {
-  font-size:      clamp(1.4rem, 2.5vw, 4.2rem);
-  font-weight:    800;
+  font-size:      clamp(1.8rem, 3.2vw, 5.5rem);
+  font-weight:    900;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   flex:           1;
@@ -252,7 +252,7 @@ body {
 }
 
 .carrier-badge {
-  font-size:      clamp(0.75rem, 1.1vw, 1.8rem);
+  font-size:      clamp(1rem, 1.4vw, 2.4rem);
   font-weight:    700;
   background:     rgba(0, 0, 0, 0.35);
   padding:        clamp(0.2rem, 0.35vh, 0.5rem) clamp(0.5rem, 0.9vw, 1.4rem);
@@ -303,8 +303,8 @@ body {
 .ship-ticket.soon    { color: #fb923c; }
 
 .ship-date {
-  font-size:            clamp(0.9rem, 1.4vw, 2.3rem);
-  font-weight:          500;
+  font-size:            clamp(1.2rem, 2vw, 3.2rem);
+  font-weight:          700;
   color:                var(--text-muted);
   font-variant-numeric: tabular-nums;
   white-space:          nowrap;
