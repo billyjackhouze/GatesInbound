@@ -81,6 +81,7 @@ app.get('/api/inbound-shipments', async (req, res) => {
       LAYOUT,
       {
         'ExpArrivalDate': dateRange,    // find by estimated date only
+        'Processed':      'No',         // not yet processed/received
       },
       {
         limit: 200,
