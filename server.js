@@ -77,11 +77,10 @@ app.get('/api/inbound-shipments', async (req, res) => {
     const next72h  = new Date(now.getTime() + 2  * 24 * 60 * 60 * 1000);  // today + tomorrow + day after
     const dateRange = `${fmDate(pastDays)}...${fmDate(next72h)}`;
 
-    const records = await fm.findRecords(
+    const rawRecords = await fm.findRecords(
       LAYOUT,
       {
-        'ActualArrivalDate': '=',       // blank = not yet arrived
-        'ExpArrivalDate':    dateRange, // within ±30 days
+        'ExpArrivalDate': dateRange,    // find by estimated date only
       },
       {
         limit: 200,
@@ -89,20 +88,34 @@ app.get('/api/inbound-shipments', async (req, res) => {
       }
     );
 
+    // Keep records where:
+    //   • ActualArrivalDate is blank (not yet received), OR
+    //   • ActualArrivalDate differs from ExpArrivalDate (arrived on wrong date / data issue)
+    // Drop records where ActualArrivalDate = ExpArrivalDate (received on time — done).
+    // Always use ExpArrivalDate for display and bucketing.
+    const mapped = rawRecords.map(r => ({
+      recordId:      r.recordId,
+      expArrival:    r.fieldData['ExpArrivalDate']                || '',
+      actualArrival: r.fieldData['ActualArrivalDate']             || '',
+      ticketNumber:  r.fieldData['InboundTicket Number']          || '',
+      gelPO:         r.fieldData['Gel PO#']                       || '',
+      billOfLading:  r.fieldData['BillOfLading']                  || '',
+      carrier:       r.fieldData['InBoundCompanies::CompanyName'] || '',
+      vendor:        r.fieldData['InboundVendors 2::CompanyName'] || '',
+      logisticsco:   r.fieldData['InBoundFC::CompanyName']        || '',
+    }));
+
+    const filtered = mapped.filter(r => {
+      if (!r.actualArrival) return true;                    // not received yet — show
+      if (r.actualArrival !== r.expArrival) return true;   // different dates — show with exp date
+      return false;                                         // received on expected date — done, hide
+    });
+
     return {
-      count:   records.length,
+      count:   filtered.length,
       asOf:    new Date().toISOString(),
       window:  { from: fmDate(pastDays), to: fmDate(next72h) },
-      records: records.map(r => ({
-        recordId:     r.recordId,
-        expArrival:   r.fieldData['ExpArrivalDate']                || '',
-        ticketNumber: r.fieldData['InboundTicket Number']          || '',
-        gelPO:        r.fieldData['Gel PO#']                       || '',
-        billOfLading: r.fieldData['BillOfLading']                  || '',
-        carrier:      r.fieldData['InBoundCompanies::CompanyName'] || '',
-        vendor:       r.fieldData['InboundVendors 2::CompanyName'] || '',
-        logisticsco:  r.fieldData['InBoundFC::CompanyName']        || '',
-      })),
+      records: filtered,
     };
   });
 
