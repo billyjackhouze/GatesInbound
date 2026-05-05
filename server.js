@@ -72,10 +72,10 @@ async function withFM(res, fn) {
 // ─────────────────────────────────────────────────────────────
 app.get('/api/inbound-shipments', async (req, res) => {
   const result = await withFM(res, async (fm) => {
-    const now       = new Date();
-    const yesterday = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-    const tomorrow  = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
-    const dateRange = `${fmDate(yesterday)}...${fmDate(tomorrow)}`;
+    const now      = new Date();
+    const pastDays = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);  // all overdue up to 30 days back
+    const next72h  = new Date(now.getTime() + 3  * 24 * 60 * 60 * 1000);  // next 72 hours
+    const dateRange = `${fmDate(pastDays)}...${fmDate(next72h)}`;
 
     const records = await fm.findRecords(
       LAYOUT,
@@ -92,7 +92,7 @@ app.get('/api/inbound-shipments', async (req, res) => {
     return {
       count:   records.length,
       asOf:    new Date().toISOString(),
-      window:  { from: fmDate(yesterday), to: fmDate(tomorrow) },
+      window:  { from: fmDate(pastDays), to: fmDate(next72h) },
       records: records.map(r => ({
         recordId:     r.recordId,
         expArrival:   r.fieldData['ExpArrivalDate']                || '',
