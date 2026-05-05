@@ -40,16 +40,55 @@ function timeAgo(ts) {
   return `${Math.round(secs / 60)}m ago`
 }
 
-// ── Group by carrier ──────────────────────────────────────────────────────────
+// ── Group by day ──────────────────────────────────────────────────────────────
 
-function groupByCarrier(records) {
+function dayKey(expArrival) {
+  const d = parseFMDate(expArrival)
+  if (!d) return 'UNKNOWN DATE'
+  const today = new Date(); today.setHours(0,0,0,0)
+  const diff  = Math.round((d - today) / 86_400_000)
+  if (diff < 0)  return '__OVERDUE'   // all past dates → one group
+  if (diff === 0) return '__TODAY'
+  if (diff === 1) return '__TOMORROW'
+  return expArrival                   // future: use raw date as key, sorted below
+}
+
+function dayLabel(key) {
+  if (key === '__OVERDUE')  return 'OVERDUE'
+  if (key === '__TODAY')    return 'TODAY'
+  if (key === '__TOMORROW') return 'TOMORROW'
+  const d = parseFMDate(key)
+  if (!d) return key
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
+}
+
+function dayIcon(key) {
+  if (key === '__OVERDUE')  return '🔴'
+  if (key === '__TODAY')    return '🟢'
+  if (key === '__TOMORROW') return '🟡'
+  return '📅'
+}
+
+function groupByDay(records) {
   const map = new Map()
+  // Preserve sort order — records already sorted by ExpArrivalDate asc from server
   for (const r of records) {
-    const key = r.carrier || 'UNKNOWN CARRIER'
+    const key = dayKey(r.expArrival)
     if (!map.has(key)) map.set(key, [])
     map.get(key).push(r)
   }
-  return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+  // Sort groups: overdue first, today, tomorrow, then future dates in order
+  const order = ['__OVERDUE', '__TODAY', '__TOMORROW']
+  return Array.from(map.entries()).sort(([a], [b]) => {
+    const ai = order.indexOf(a)
+    const bi = order.indexOf(b)
+    if (ai !== -1 && bi !== -1) return ai - bi
+    if (ai !== -1) return -1
+    if (bi !== -1) return 1
+    // Both are raw dates — sort chronologically
+    const da = parseFMDate(a), db = parseFMDate(b)
+    return (da || 0) - (db || 0)
+  })
 }
 
 // ── Live clock ────────────────────────────────────────────────────────────────
@@ -179,6 +218,12 @@ function ShipmentRow({ record, index }) {
             {record.gelPO}
           </span>
         )}
+        {record.carrier && (
+          <>
+            <span className="meta-divider">·</span>
+            <span className="ship-meta">{record.carrier}</span>
+          </>
+        )}
         {record.logisticsco && (
           <>
             <span className="meta-divider">·</span>
@@ -190,14 +235,14 @@ function ShipmentRow({ record, index }) {
   )
 }
 
-// ── Carrier group ─────────────────────────────────────────────────────────────
+// ── Day group ─────────────────────────────────────────────────────────────────
 
-function CarrierGroup({ carrier, records }) {
+function DayGroup({ dayKey: key, records }) {
   return (
     <div className="carrier-section">
-      <div className="carrier-header">
-        <span className="carrier-icon">📦</span>
-        <span className="carrier-name">{carrier}</span>
+      <div className={`carrier-header day-${key.replace('__','').toLowerCase()}`}>
+        <span className="carrier-icon">{dayIcon(key)}</span>
+        <span className="carrier-name">{dayLabel(key)}</span>
         <span className="carrier-badge">
           {records.length} {records.length === 1 ? 'Shipment' : 'Shipments'}
         </span>
@@ -289,7 +334,7 @@ export default function App() {
     return () => clearInterval(t)
   }, [load])
 
-  const groups = groupByCarrier(records)
+  const groups = groupByDay(records)
 
   // Re-fit whenever record count changes or window resizes
   useAutoFit(JSON.stringify(groups.map(g => g[1].length)))
@@ -308,8 +353,8 @@ export default function App() {
   } else if (records.length === 0) {
     boardContent = <EmptyState />
   } else {
-    boardContent = groups.map(([carrier, recs]) => (
-      <CarrierGroup key={carrier} carrier={carrier} records={recs} />
+    boardContent = groups.map(([key, recs]) => (
+      <DayGroup key={key} dayKey={key} records={recs} />
     ))
   }
 

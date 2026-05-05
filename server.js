@@ -100,7 +100,7 @@ app.get('/api/inbound-shipments', async (req, res) => {
         gelPO:        r.fieldData['Gel PO#']                       || '',
         billOfLading: r.fieldData['BillOfLading']                  || '',
         carrier:      r.fieldData['InBoundCompanies::CompanyName'] || '',
-        vendor:       r.fieldData['InboundVendors::CompanyName']   || '',
+        vendor:       r.fieldData['InboundVendors 2::CompanyName'] || '',
         logisticsco:  r.fieldData['InBoundFC::CompanyName']        || '',
       })),
     };

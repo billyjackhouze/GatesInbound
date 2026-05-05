@@ -220,6 +220,11 @@ body {
   box-shadow:    0 2px 10px rgba(0, 0, 0, 0.45);
 }
 
+/* Day-group header color overrides */
+.carrier-header.day-overdue  { background: linear-gradient(90deg, #991b1b, #7f1d1d); }
+.carrier-header.day-today    { background: linear-gradient(90deg, #166534, #14532d); }
+.carrier-header.day-tomorrow { background: linear-gradient(90deg, #92400e, #78350f); }
+
 .carrier-header {
   background:  linear-gradient(90deg, var(--carrier-bg), var(--carrier-bg2));
   padding:     clamp(0.6rem, 1vh, 1.5rem) clamp(1rem, 2.2vw, 3.5rem);
